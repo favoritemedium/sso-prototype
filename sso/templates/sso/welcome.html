@@ -1,0 +1,12 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Welcome, {{ request.user.get_short_name }}</title>
+  </head>
+  <body>
+    <div class="content">
+      <p>You are now signed in as {{ request.user.email }}.</p>
+      <p><a href="/signout">Sign out</a></p>
+    </div>
+  </body>
+</html>

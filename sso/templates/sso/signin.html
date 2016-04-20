@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Sample Login Page</title>
+  </head>
+  <body>
+    <div class="content">
+
+      <div class="signin">
+        <h2>Please sign in</h2>
+        <form action="{% url 'signin' %}" method="post">
+          {% csrf_token %}
+          {{ signinform.as_p }}
+          <input type="submit" value="Sign In">
+        </form>
+      </div>
+
+      <div class="signup">
+        <h2>Or, create a new account</h2>
+        <form action="{% url 'signup' %}" method="post">
+          {% csrf_token %}
+          {{ signupform.as_p }}
+          <input type="submit" value="Sign Up">
+        </form>
+      </div>
+
+      <div class="social">
+        <h2>Or, sign in with...</h2>
+        <div class="google"></div>
+        <div class="facebook"></div>
+      </div>
+
+    </div>
+  </body>
+</html>

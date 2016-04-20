@@ -16,6 +16,14 @@ Including another URLconf
 from django.conf.urls import url
 from django.contrib import admin
 
+from sso import views
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
+    url(r'^$', views.signin),
+    url(r'^signin$', views.signin, name='signin'),
+    url(r'^signout$', views.signout, name='signout'),
+    url(r'^signup$', views.signup, name='signup'),
+    url(r'^verify$', views.verify, name='verify'),
+    url(r'^welcome$', views.welcome, name='welcome'),
 ]

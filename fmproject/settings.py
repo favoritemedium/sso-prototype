@@ -87,6 +87,7 @@ DATABASES = {
 # https://docs.djangoproject.com/en/1.9/ref/settings/#auth-password-validators
 
 AUTH_USER_MODEL = 'sso.Member'
+LOGIN_URL = '/signin'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
