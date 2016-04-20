@@ -1,4 +1,4 @@
-/sso
+/.venv
 /.env
 /static
 db.sqlite3

@@ -7,43 +7,41 @@ import random
 import time
 import re
 
-# Create your models here.
-
-class UserManager(BaseUserManager):
+class MemberManager(BaseUserManager):
 
     def create_user(self, email, short_name, password=None):
         """
         Creates and saves a user with the given email and short name.
         """
         if not email:
-            raise ValueError('Users must have an email address')
+            raise ValueError('Members must have an email address')
 
-        user = self.model(
+        member = self.model(
             email=self.normalize_email(email),
             short_name=short_name,
         )
 
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
+        member.set_password(password)
+        member.save(using=self._db)
+        return member
 
     def create_superuser(self, email, short_name, password):
         """
         Creates and saves a superuser with the given email, short name
         and password.
         """
-        user = self.create_user(
+        member = self.create_user(
             email=self.normalize_email(email),
             password=password,
             short_name=short_name,
         )
-        user.is_admin = True
-        user.save(using=self._db)
-        return user
+        member.is_admin = True
+        member.save(using=self._db)
+        return member
 
 
-class User(AbstractBaseUser):
-    # users are identified by email address
+class Member(AbstractBaseUser):
+    # members are identified by email address
     email = models.EmailField(
         _('email address'),
         unique=True,
@@ -59,7 +57,7 @@ class User(AbstractBaseUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['short_name']
 
-    objects = UserManager()
+    objects = MemberManager()
 
     def get_full_name(self):
         return self.full_name
@@ -69,15 +67,15 @@ class User(AbstractBaseUser):
 
     @property
     def is_staff(self):
-        "Is the user a member of staff?"
+        "Is the member staff?"
         return self.is_admin
 
     def has_perm(self, perm, obj=None):
-        "Does the user have a specific permission?"
+        "Does the member have a specific permission?"
         return True
 
     def has_module_perms(self, app_label):
-        "Does the user have permissions to view the app `app_label`?"
+        "Does the member have permissions to view the app `app_label`?"
         return True
 
     def __str__(self):

@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'ssoapp',
+    'sso',
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -51,7 +51,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'ssoproject.urls'
+ROOT_URLCONF = 'fmproject.urls'
 
 TEMPLATES = [
     {
@@ -69,7 +69,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'ssoproject.wsgi.application'
+WSGI_APPLICATION = 'fmproject.wsgi.application'
 
 
 # Database
@@ -86,7 +86,7 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/1.9/ref/settings/#auth-password-validators
 
-AUTH_USER_MODEL = 'ssoapp.User'
+AUTH_USER_MODEL = 'sso.Member'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
