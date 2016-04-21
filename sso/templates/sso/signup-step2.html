@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Finish Registration</title>
+  </head>
+  <body>
+    <div class="content">
+
+      <div class="signin">
+        <h2>Please complete your registration</h2>
+        <form action="{% url 'verify' %}" method="post">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <input type="submit" value="Register">
+        </form>
+      </div>
+
+    </div>
+  </body>
+</html>

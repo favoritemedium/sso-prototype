@@ -20,7 +20,7 @@ from sso import views
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^$', views.signin),
+    url(r'^$', views.main, name='main'),
     url(r'^signin$', views.signin, name='signin'),
     url(r'^signout$', views.signout, name='signout'),
     url(r'^signup$', views.signup, name='signup'),

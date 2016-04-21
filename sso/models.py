@@ -60,10 +60,10 @@ class Member(AbstractBaseUser):
     objects = MemberManager()
 
     def get_full_name(self):
-        return self.full_name
+        return self.full_name or self.short_name
 
     def get_short_name(self):
-        return self.short_name or self.full_name
+        return self.short_name
 
     @property
     def is_staff(self):
@@ -82,6 +82,9 @@ class Member(AbstractBaseUser):
         return self.email
 
 
+# ==========================
+# Email verification section
+# ==========================
 
 # The default is for tokens to be valid up to 24 hours after issue.
 EMAIL_TOKEN_VALIDITY = 24 * 3600   # Tokens are valid for 24 hours
@@ -93,15 +96,10 @@ EMAIL_TOKEN_LENGTH = 64
 # up to ten extra minutes to complete the signup process.
 SIGNUP_GRACE_TIME = 10 * 60
 
-# Generates a random token.
+# Generate a random toke
 def create_token():
     return ''.join(random.choice(string.ascii_letters + string.digits) \
         for _ in range(EMAIL_TOKEN_LENGTH))
-
-# Check only the very basic email format. The real validation happens when
-# we actually send to the email address. This will allow  unconventional
-# email addresses to still be used.
-email_format = re.compile(r'^[^@]+@[^@]+$')
 
 class VerifyEmail(models.Model):
     """
@@ -117,21 +115,11 @@ class VerifyEmail(models.Model):
     expires = models.BigIntegerField(default=expires_default)
 
     @classmethod
-    def get_token(cls, email):
+    def generate_token(cls, email):
         """
         Generate an email verify token.  This token should then be emailed to
         the user as part of a verify link.
         """
-        if not email_format.match(email):
-            raise ValidationError(_('Enter a valid email address.'), code='invalid')
-
-        # Normalize the domain part of the email so that we recognize
-        # yahoo.com and Yahoo.com as the same.
-        # Our email_format regex check has ensured that the email string
-        # exactly one '@'
-        pre, post = email.split('@')
-        email = pre + '@' + post.lower()
-
         done = False
         while not done:
             token = create_token()
@@ -145,10 +133,10 @@ class VerifyEmail(models.Model):
         return token
 
     @classmethod
-    def verify_token(cls, token):
+    def redeem_token(cls, token):
         """
-        Finds an email address associated with a verify token.  This should be
-        called when a user clicks on a link in their email.
+        Finds an email address associated with a verify token.
+        This should be called when a user clicks on a link in their email.
         Returns None if the token is not valid.
         """
         now = int(time.time())
