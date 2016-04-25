@@ -1,10 +1,10 @@
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
-from django.contrib.auth import login, logout
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_protect
 from .forms import SigninForm, SignupForm, VerifyForm
-from .models import VerifyEmail
+from .models import Member, VerifyEmail
 from .mail import send_verify_link, send_reset_password_link
 
 
@@ -24,37 +24,60 @@ def main(request):
 
 @csrf_protect
 def signin(request):
+    """
+    This is the basic sign-in view.  When called as a GET, a blank sign-in form
+    (and optionally a blank sign-up form) is displayed.  When called as a POST
+    with valid credentials, then the user is signed in.  When called as a POST
+    with invalid credentials, the form is re-displayed for correction.
+    """
     if request.method == 'POST':
         form = SigninForm(request.POST)
         if form.is_valid():
-            # The signin form validation includes checking the credentials
-            # against the member database.  It it succeeds, then we know we
-            # have a valid member.
-            login(request, form.cleaned_data['member'])
-            return HttpResponseRedirect('/')
+            member = authenticate(email=form.cleaned_data['email'],
+                password=form.cleaned_data['password'])
+            if member is None:
+                form.add_error("password", "Email and password don't match.")
+            elif not member.is_active:
+                form.add_error("email", "That account is disabled.")
+            else:
+                login(request, member)
+                return HttpResponseRedirect('/')
     else:
         form = SigninForm()
 
+    # Depending on design requirements, the sign-in page can include either
+    # a blank sign-up form or a link to the sign-up page.
     return render(request, 'sso/signin.html',
         {'signinform': form, 'signupform': SignupForm()})
 
 
 def signout(request):
+    """
+    Signs out the current user and returns to the main page.
+    """
     logout(request)
     return HttpResponseRedirect('/')
 
 
 @csrf_protect
 def signup(request):
+    """
+    This is the basic sign-up view.  When called as a GET, a blank sign-up form
+    is displayed.  When called as a POST with a valid email, a confirmation
+    token is generated and a confirmation email is sent out.  When called as a
+    POST without a valid email, the form is re-displayed for correction.
+    An email that is already registered is considered invalid.
+    """
     if request.method == 'POST':
         form = SignupForm(request.POST)
         if form.is_valid():
-
-            # TODO check for duplicate email here (or there)
-
             email = form.cleaned_data['email']
-            send_verify_link(request, email)
-            return render(request, 'sso/checkyouremail.html', {'email': email})
+            if Member.objects.is_registered(email):
+                form.add_error("email", "That email address is already registered.")
+            else:
+                token = VerifyEmail.generate_token(email)
+                send_verify_link(request, email, token)
+                return render(request, 'sso/checkyouremail.html', {'email': email})
     else:
         form = SignupForm()
 
@@ -64,13 +87,18 @@ def signup(request):
 
 @csrf_protect
 def verify(request):
-    # When the user clicks on the link in the email, we get a GET request
-    # with the verify token as a URL parameter.  This token is then embedded
-    # into the form, so we get it again (in the POST data) when the user has
-    # filled in their name and other info.
-    #
-    # The token is reused this way in order to not rely on the session to
-    # keep track of what email address has just been verified.
+    """
+    This is the entry point for the verify link that's sent by
+    send_verify_link() above.
+
+    When the user clicks on the link in the email, we get a GET request
+    with the verify token as a URL parameter.  This token is then embedded
+    into the form, so we get it again (in the POST data) when the user has
+    filled in their name, password, and any other requested info.
+
+    The token is reused this way in order to not rely on the session to
+    keep track of what email address has just been verified.
+    """
     if request.method == 'POST':
         token = request.POST.get('token','')
     else:
@@ -79,16 +107,25 @@ def verify(request):
     email = VerifyEmail.redeem_token(token)
     if email is None:
         # Sorry, the link is wrong or expired.
-        return render(request, 'sso/verifysorry.html')
-
-    # TODO check if the email has been registered and make another sorry page.
+        return render(request, 'sso/verifysorry.html',
+            {'code': 'invalid_token'})
+    if Member.objects.is_registered(email):
+        # Edge case: Somehow the email already got registered (e.g. the user
+        # had an extra tab open).
+        return render(request, 'sso/verifysorry.html',
+            {'email': email, 'code': 'duplicate'})
 
     if request.method == 'POST':
         form = VerifyForm(request.POST, initial={'email': email})
         if form.is_valid():
-            # The form validation creates the new member if all the fields
-            # check out, so let's sign the member in an go to the welcome page.
-            login(request, form.cleaned_data['member'])
+            # Now we have the rest of the required info for sign-up, so
+            # create the member.
+            args = form.cleaned_data.copy()
+            args.pop('token')
+            Member.objects.create_user(**args)
+            member = authenticate(email=args['email'], password=args['password'])
+            # TODO: what if authenticate fails?
+            login(request, member)
             return HttpResponseRedirect('/welcome')
     else:
         form = VerifyForm(initial={'email': email, 'token': token})

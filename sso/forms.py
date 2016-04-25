@@ -3,7 +3,6 @@ from django.contrib.auth import authenticate
 from django.utils.translation import ugettext_lazy as _
 import re
 
-from .models import Member
 from django.db import IntegrityError
 
 
@@ -29,27 +28,6 @@ class SigninForm(forms.Form):
     def clean_email(self):
         return emailcleaner(self.cleaned_data['email'])
 
-    def clean(self):
-        super(SigninForm, self).clean()
-
-        # If either email or password has failed validatation (e.g. is missing),
-        # then we quit here.
-        # em, pw = self.cleaned_data.get('email'), self.cleaned_data.get('password')
-        #if not (em and pw):
-        if self.errors:
-            return
-
-        # We have both email and password; attempt to authenticate.
-        member = authenticate(email=em, password=pw)
-        if member is None:
-            raise forms.ValidationError(_("Email and password don't match."), code='auth_failure')
-        elif not member.is_active:
-            raise forms.ValidationError(_("That account is inactive."), code='inactive_account')
-
-        # Authentication is successful, so store the member object along with
-        # the cleaned data.  The view will then use this to call auth.login.
-        self.cleaned_data['member'] = member
-
 
 class SignupForm(forms.Form):
     email = forms.CharField(label="Email", max_length=254)
@@ -64,24 +42,3 @@ class VerifyForm(forms.Form):
     full_name = forms.CharField(label="Full name", max_length=50, required=False)
     short_name = forms.CharField(label="Short name", max_length=30)
     token = forms.CharField(widget=forms.HiddenInput())
-
-    def clean(self):
-        super(VerifyForm, self).clean()
-
-        if self.errors:
-            return
-
-        member = Member(
-            email=self.cleaned_data['email'],
-            full_name=self.cleaned_data['full_name'],
-            short_name=self.cleaned_data['short_name'],
-        )
-        member.set_password(self.cleaned_data['password'])
-        try:
-            member.save()
-        except IntegrityError:
-            raise forms.ValidationError(_("That email is already registered."), code='duplicate')
-
-        self.cleaned_data['member'] = authenticate(
-            email=self.cleaned_data['email'],
-            password=self.cleaned_data['password'])

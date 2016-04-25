@@ -7,11 +7,17 @@ import random
 import time
 import re
 
+
+# =========================
+# Member management section
+# =========================
+
 class MemberManager(BaseUserManager):
 
-    def create_user(self, email, short_name, password=None):
+    def create_user(self, email, short_name, password=None, full_name=''):
         """
         Creates and saves a user with the given email and short name.
+        Optionally includes password and full name.
         """
         if not email:
             raise ValueError('Members must have an email address')
@@ -19,6 +25,7 @@ class MemberManager(BaseUserManager):
         member = self.model(
             email=self.normalize_email(email),
             short_name=short_name,
+            full_name=full_name,
         )
 
         member.set_password(password)
@@ -39,21 +46,52 @@ class MemberManager(BaseUserManager):
         member.save(using=self._db)
         return member
 
+    def is_registered(self, email):
+        """
+        Returns True if the email is registered in the member database.
+        """
+        return self.filter(email=email).count() > 0
+
 
 class Member(AbstractBaseUser):
-    # members are identified by email address
-    email = models.EmailField(
-        _('email address'),
-        unique=True,
-        error_messages={
-            'unique': _("That email is already registered."),
-        },
-    )
-    full_name = models.CharField(_('full name'), max_length=50, blank=True)
-    short_name = models.CharField(_('short name'), max_length=30)
+
+    # Members are identified by email address.
+    email = models.EmailField(max_length=254, unique=True)
+
+    # By default, we require only a short_name used for greeting,
+    # as in "Hi, <name>."
+    full_name = models.CharField(max_length=64, blank=True)
+    short_name = models.CharField(max_length=32)
+
+    # Setting is_active to False effectively deletes a member but without
+    # losing any of their data.
     is_active = models.BooleanField(default=True)
+
+    # The is_admin flag is to allow access to the django admin panel and
+    # is intended only for site admins.
+    # For other types of admin functions, use the roles field.
     is_admin = models.BooleanField(default=False)
 
+    # This is a bit field to keep track of other roles that the member has,
+    # e.g. staff, teacher, gold member.  (This is in place of using the
+    # groups function, which is overkill for most of our projects.)
+    roles = models.PositiveSmallIntegerField(default=0)
+
+    def has_role(self, role):
+        """
+        Returns True if this member has any of the roles requested.
+        Parameter role is a bitmask.
+        """
+        return bool(roles & role)
+
+    def has_roles(self, roles):
+        """
+        Returns True if the member has all of the roles requested.
+        Parameter role is a bitmask.
+        """
+        return roles & role == roles
+
+    # These are used by django admin.
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['short_name']
 
@@ -65,18 +103,19 @@ class Member(AbstractBaseUser):
     def get_short_name(self):
         return self.short_name
 
-    @property
-    def is_staff(self):
-        "Is the member staff?"
-        return self.is_admin
+    # TODO: do we need these?
+    # @property
+    # def is_staff(self):
+    #     "Is the member staff?"
+    #     return self.is_admin
 
-    def has_perm(self, perm, obj=None):
-        "Does the member have a specific permission?"
-        return True
+    # def has_perm(self, perm, obj=None):
+    #     "Does the member have a specific permission?"
+    #     return True
 
-    def has_module_perms(self, app_label):
-        "Does the member have permissions to view the app `app_label`?"
-        return True
+    # def has_module_perms(self, app_label):
+    #     "Does the member have permissions to view the app `app_label`?"
+    #     return True
 
     def __str__(self):
         return self.email
