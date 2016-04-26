@@ -17,6 +17,12 @@ with an `.env` file that looks like this:
     alias pm="./manage.py"
     export DEBUG=on
 
+This app needs Github app for 3rd part login, please [register your
+app](https://github.com/settings/applications/new), and set `/callback/github`
+as callback address. After registration done, copy
+`fmproject/config.json.example` to `fmproject/config.json` and fill *client_id*
+and *client_secret* from registered app to that file.
+
 Then I can cd into project root and run the site in debug mode with:
 
     $ pm runserver
