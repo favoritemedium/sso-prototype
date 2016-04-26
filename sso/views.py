@@ -1,4 +1,5 @@
-from django.http import HttpResponseRedirect
+import requests
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -6,6 +7,7 @@ from django.views.decorators.csrf import csrf_protect
 from .forms import SigninForm, SignupForm, VerifyForm
 from .models import Member, VerifyEmail
 from .mail import send_verify_link, send_reset_password_link
+from sso.apps import SsoConfig
 
 
 
@@ -13,7 +15,7 @@ def main(request):
     # The authentication middleware adds the current member to the request
     # object as request.user.  We can check request.user.is_authenticated()
     # to determine if someone is signed in or not.  (This can also be done
-    # within the template.)
+    # within the tempate.)
 
     if request.user.is_authenticated():
         # do something here
@@ -48,7 +50,11 @@ def signin(request):
     # Depending on design requirements, the sign-in page can include either
     # a blank sign-up form or a link to the sign-up page.
     return render(request, 'sso/signin.html',
-        {'signinform': form, 'signupform': SignupForm()})
+        {
+            'signinform': form,
+            'signupform': SignupForm(),
+            'github_client_id': SsoConfig.github_client_id
+        })
 
 
 def signout(request):
@@ -136,3 +142,41 @@ def verify(request):
 @login_required
 def welcome(request):
     return render(request, 'sso/welcome.html')
+
+
+def auth_with_github(request):
+    code = request.GET.get('code', '')
+    if code is not '':
+        payload = {
+            'client_id': SsoConfig.github_client_id,
+            'client_secret': SsoConfig.github_client_secret,
+            'code': code,
+        }
+        headers = {
+            'Accept': 'application/json'
+        }
+        r = requests.post('https://github.com/login/oauth/access_token',
+                          data=payload,
+                          headers=headers)
+        json_resp = r.json()
+        token = json_resp['access_token']
+        scopes = json_resp['scope'].split(',')
+
+        primary_email = get_github_primary_user_email(token)
+        return JsonResponse({'result': primary_email})
+    else:
+        return JsonResponse({'error': 'Error'})
+
+
+def get_github_primary_user_email(token):
+    r = requests.get('https://api.github.com/user/emails',
+                     params={
+                         'access_token': token
+                     })
+    user_email_list = r.json()
+    primary_email = ''
+    for email_info in user_email_list:
+        if email_info.get('primary', ''):
+            return email_info['email']
+
+    return primary_email
