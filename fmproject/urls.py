@@ -26,4 +26,5 @@ urlpatterns = [
     url(r'^signup$', views.signup, name='signup'),
     url(r'^verify$', views.verify, name='verify'),
     url(r'^welcome$', views.welcome, name='welcome'),
+    url(r'^callback/github$', views.auth_with_github, name='auth with github'),
 ]
