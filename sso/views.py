@@ -148,6 +148,14 @@ def welcome(request):
     return render(request, 'sso/welcome.html')
 
 
+def request_access_token(url, payload):
+    headers = {
+        'Accept': 'application/json'
+    }
+    r = requests.post(url, data=payload, headers=headers)
+    return r.json()
+
+
 def auth_with_github(request):
     code = request.GET.get('code', '')
     if code is not '':
@@ -156,13 +164,7 @@ def auth_with_github(request):
             'client_secret': SsoConfig.github_client_secret,
             'code': code,
         }
-        headers = {
-            'Accept': 'application/json'
-        }
-        r = requests.post('https://github.com/login/oauth/access_token',
-                          data=payload,
-                          headers=headers)
-        json_resp = r.json()
+        json_resp = request_access_token('https://github.com/login/oauth/access_token', payload)
         token = json_resp['access_token']
         scopes = json_resp['scope'].split(',')
 
