@@ -53,7 +53,8 @@ def signin(request):
         {
             'signinform': form,
             'signupform': SignupForm(),
-            'github_client_id': SsoConfig.github_client_id
+            'github_client_id': SsoConfig.github_client_id,
+            'facebook_client_id': SsoConfig.facebook_client_id
         })
 
 
