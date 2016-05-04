@@ -2,5 +2,13 @@
     "github": {
         "client_id": "YOUR_GITHUB_CLIENT_ID",
         "client_secret": "YOUR_GITHUB_CLIENT_SECRET"
+    },
+    "google": {
+        "client_id": "YOUR_GITHUB_CLIENT_ID",
+        "client_secret": "YOUR_GITHUB_CLIENT_SECRET"
+    },
+    "facebook": {
+        "client_id": "YOUR_GITHUB_CLIENT_ID",
+        "client_secret": "YOUR_GITHUB_CLIENT_SECRET"
     }
 }
