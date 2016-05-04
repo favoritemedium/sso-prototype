@@ -156,6 +156,9 @@ def request_access_token(url, payload):
     return r.json()
 
 
+######################################
+# Github related code
+######################################
 def auth_with_github(request):
     code = request.GET.get('code', '')
     if code is not '':
