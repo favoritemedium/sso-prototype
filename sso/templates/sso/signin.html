@@ -26,8 +26,12 @@
 
       <div class="social">
         <h2>Or, sign in with...</h2>
-        <div class="google"></div>
-        <div class="facebook"></div>
+        <div class="google">
+          <a>Google</a>
+        </div>
+        <div class="facebook">
+          <a href="https://www.facebook.com/dialog/oauth?client_id={{ facebook_client_id }}&redirect_uri=http://localhost:8000/callback/facebook&scope=email&auth_type=rerequest">Facebook</a>
+        </div>
         <div class="github">
           <a href="https://github.com/login/oauth/authorize?scope=user:email&client_id={{ github_client_id }}">Github</a>
         </div>
