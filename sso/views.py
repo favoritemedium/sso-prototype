@@ -1,4 +1,7 @@
+import os
+import hashlib
 import requests
+import facebook
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login, logout
