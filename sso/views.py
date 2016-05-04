@@ -186,3 +186,34 @@ def get_github_primary_user_email(token):
             return email_info['email']
 
     return primary_email
+######################################
+# Facebook related code
+######################################
+def auth_with_facebook(request):
+    code = request.GET.get('code', '')
+    if code is not '':
+        payload = {
+            'client_id': SsoConfig.facebook_client_id,
+            'client_secret': SsoConfig.facebook_client_secret,
+            'code': code,
+            'redirect_uri': 'http://localhost:8000/callback/facebook',
+        }
+        json_resp = request_access_token(
+            'https://graph.facebook.com/v2.6/oauth/access_token',
+            payload
+        )
+
+        token = json_resp['access_token']
+        graph = facebook.GraphAPI(access_token=token)
+        args = {'fields' : 'id,name,email', }
+        profile = graph.get_object(id='me', **args)
+
+        return JsonResponse(profile)
+        #scopes = json_resp['scope'].split(',')
+
+        #primary_email = get_github_primary_user_email(token)
+        #return JsonResponse({'result': primary_email})
+    else:
+        return JsonResponse({'error': 'Error'})
+
+
