@@ -2,11 +2,13 @@ import os
 import hashlib
 import requests
 import facebook
+import httplib2
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_protect
+from oauth2client import client
 from .forms import SigninForm, SignupForm, VerifyForm
 from .models import Member, VerifyEmail
 from .mail import send_verify_link, send_reset_password_link
@@ -57,6 +59,7 @@ def signin(request):
             'signinform': form,
             'signupform': SignupForm(),
             'github_client_id': SsoConfig.github_client_id,
+            'google_client_id': SsoConfig.google_client_id,
             'facebook_client_id': SsoConfig.facebook_client_id
         })
 
@@ -189,6 +192,26 @@ def get_github_primary_user_email(token):
             return email_info['email']
 
     return primary_email
+
+
+######################################
+# Google related code
+######################################
+def auth_with_google(request):
+    code = request.GET.get('code', '')
+    if code is not '':
+        credentials = client.credentials_from_code(
+            SsoConfig.google_client_id,
+            SsoConfig.google_client_secret,
+            'profile',
+            code,
+            redirect_uri='http://localhost:8000/callback/google'
+        )
+        return JsonResponse(credentials.id_token)
+    else:
+        return JsonResponse({'error': 'Error'})
+
+
 ######################################
 # Facebook related code
 ######################################
