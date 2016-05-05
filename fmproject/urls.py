@@ -28,4 +28,5 @@ urlpatterns = [
     url(r'^welcome$', views.welcome, name='welcome'),
     url(r'^callback/github$', views.auth_with_github, name='auth_with_github'),
     url(r'^callback/facebook$', views.auth_with_facebook, name='auth_with_facebook'),
+    url(r'^callback/google$', views.auth_with_google, name='auth_with_google'),
 ]
