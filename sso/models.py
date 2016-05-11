@@ -135,10 +135,12 @@ EMAIL_TOKEN_LENGTH = 64
 # up to ten extra minutes to complete the signup process.
 SIGNUP_GRACE_TIME = 10 * 60
 
+
 # Generate a random toke
 def create_token():
-    return ''.join(random.choice(string.ascii_letters + string.digits) \
-        for _ in range(EMAIL_TOKEN_LENGTH))
+    return ''.join(random.choice(string.ascii_letters + string.digits)
+                   for _ in range(EMAIL_TOKEN_LENGTH))
+
 
 class VerifyEmail(models.Model):
     """

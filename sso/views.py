@@ -15,7 +15,6 @@ from .mail import send_verify_link, send_reset_password_link
 from sso.apps import SsoConfig
 
 
-
 def main(request):
     # The authentication middleware adds the current member to the request
     # object as request.user.  We can check request.user.is_authenticated()
@@ -41,7 +40,7 @@ def signin(request):
         form = SigninForm(request.POST)
         if form.is_valid():
             member = authenticate(email=form.cleaned_data['email'],
-                password=form.cleaned_data['password'])
+                                  password=form.cleaned_data['password'])
             if member is None:
                 form.add_error("password", "Email and password don't match.")
             elif not member.is_active:
@@ -55,13 +54,13 @@ def signin(request):
     # Depending on design requirements, the sign-in page can include either
     # a blank sign-up form or a link to the sign-up page.
     return render(request, 'sso/signin.html',
-        {
-            'signinform': form,
-            'signupform': SignupForm(),
-            'github_client_id': SsoConfig.github_client_id,
-            'google_client_id': SsoConfig.google_client_id,
-            'facebook_client_id': SsoConfig.facebook_client_id
-        })
+                  {
+                      'signinform': form,
+                      'signupform': SignupForm(),
+                      'github_client_id': SsoConfig.github_client_id,
+                      'google_client_id': SsoConfig.google_client_id,
+                      'facebook_client_id': SsoConfig.facebook_client_id
+                  })
 
 
 def signout(request):
@@ -95,7 +94,7 @@ def signup(request):
         form = SignupForm()
 
     return render(request, 'sso/signin.html',
-        {'signinform': SigninForm(), 'signupform': form})
+                  {'signinform': SigninForm(), 'signupform': form})
 
 
 @csrf_protect
@@ -113,20 +112,20 @@ def verify(request):
     keep track of what email address has just been verified.
     """
     if request.method == 'POST':
-        token = request.POST.get('token','')
+        token = request.POST.get('token', '')
     else:
-        token = request.GET.get('token','')
+        token = request.GET.get('token', '')
 
     email = VerifyEmail.redeem_token(token)
     if email is None:
         # Sorry, the link is wrong or expired.
         return render(request, 'sso/verifysorry.html',
-            {'code': 'invalid_token'})
+                      {'code': 'invalid_token'})
     if Member.objects.is_registered(email):
         # Edge case: Somehow the email already got registered (e.g. the user
         # had an extra tab open).
         return render(request, 'sso/verifysorry.html',
-            {'email': email, 'code': 'duplicate'})
+                      {'email': email, 'code': 'duplicate'})
 
     if request.method == 'POST':
         form = VerifyForm(request.POST, initial={'email': email})
@@ -231,7 +230,7 @@ def auth_with_facebook(request):
 
         token = json_resp['access_token']
         graph = facebook.GraphAPI(access_token=token)
-        args = {'fields' : 'id,name,email', }
+        args = {'fields': 'id,name,email', }
         profile = graph.get_object(id='me', **args)
 
         return JsonResponse(profile)
